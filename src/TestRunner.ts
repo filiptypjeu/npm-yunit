@@ -10,6 +10,10 @@ import ResultReporter from "xunit.ts/dist/src/Reporters/ResultReporter";
 import Args from "command-line-args";
 import path from "path";
 
+const isTestSuitePrototype = (proto: unknown): proto is TestSuite => {
+  return !!proto && typeof proto === "object" && "getTests" in proto && typeof proto.getTests === "function";
+};
+
 class YTestSuiteLoader extends TestSuiteLoader {
   constructor(protected readonly m_file_system: FileSystem) {
     super(m_file_system);
@@ -22,7 +26,7 @@ class YTestSuiteLoader extends TestSuiteLoader {
 
     // eslint-disable-next-line
     const proto = test_class.default?.prototype;
-    if (!proto || !(proto instanceof TestSuite)) return null;
+    if (!isTestSuitePrototype(proto)) return null;
 
     const tests = proto.getTests(filters);
     if (!tests || Object.keys(tests).length === 0) return null;
