@@ -99,6 +99,7 @@ export class ConsoleReporter implements PerformanceResultReporter {
   }
 
   suiteStarted(suite: TestSuite): void {
+    this.out();
     const n = Object.keys(suite.getTests([])).length;
     this.dash(`${n} ${p("test", n)} from ${suite.constructor.name}`);
   }
@@ -142,7 +143,6 @@ export class ConsoleReporter implements PerformanceResultReporter {
     // XXX: This is the sum of the individual tests, not the total amount for the whole suite
     const time = results.time();
     this.dash(`${total} ${p("test", total)} from ${suite.constructor.name} (${ms(time)} total)`);
-    this.out();
   }
 
   runCompleted(suites: Record<string, TestSuiteResults>): void {
