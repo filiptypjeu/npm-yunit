@@ -17,14 +17,17 @@ class YTestSuiteLoader extends TestSuiteLoader {
 
   // Identfying valid test suites when loading is not always handled correctly in xunit.ts
   async loadTestSuite(module_path: string, filters: RegExp[]): Promise<TestSuite | null> {
+    // eslint-disable-next-line
     const test_class = await import(module_path);
 
+    // eslint-disable-next-line
     const proto = test_class.default?.prototype;
     if (!proto || !(proto instanceof TestSuite)) return null;
 
     const tests = proto.getTests(filters);
     if (!tests || Object.keys(tests).length === 0) return null;
 
+    // eslint-disable-next-line
     const suite: TestSuite = new test_class.default();
     suite.setTests(tests);
     return suite;
@@ -105,24 +108,24 @@ export const run = async (relative_path: string, name: string): Promise<void> =>
 };
 
 const getCallerFile = (function_name: string): string | null => {
-    const prepareStackTraceOrg = Error.prepareStackTrace;
-    const err = new Error();
-    let name: string | null = null;
+  const prepareStackTraceOrg = Error.prepareStackTrace;
+  const err = new Error();
+  let name: string | null = null;
 
-    Error.prepareStackTrace = (_, stack) => stack;
+  Error.prepareStackTrace = (_, stack) => stack;
 
-    const stack = err.stack as unknown as NodeJS.CallSite[];
+  const stack = err.stack as unknown as NodeJS.CallSite[];
 
-    let found = false;
-    for (const cs of stack) {
-      if (found) {
-        name = cs.getFileName();
-        break;
-      }
-      if (cs.getFunctionName() === function_name) found = true;
+  let found = false;
+  for (const cs of stack) {
+    if (found) {
+      name = cs.getFileName();
+      break;
     }
+    if (cs.getFunctionName() === function_name) found = true;
+  }
 
-    Error.prepareStackTrace = prepareStackTraceOrg;
+  Error.prepareStackTrace = prepareStackTraceOrg;
 
-    return name;
-}
+  return name;
+};
