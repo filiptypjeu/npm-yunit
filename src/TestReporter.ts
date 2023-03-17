@@ -3,6 +3,7 @@ import ResultReporter from "xunit.ts/dist/src/Reporters/ResultReporter";
 import TestSuiteResults from "xunit.ts/dist/src/Framework/TestSuiteResults";
 import { ResultType } from "xunit.ts/dist/src/Framework/ResultType";
 import { AssertionError } from "assert";
+import path from "path";
 import "colors";
 
 const sum = (a: number[]) => a.reduce((acc, current) => acc + current, 0);
@@ -52,8 +53,15 @@ export class ConsoleReporter implements PerformanceResultReporter {
   protected m_suiteName = "";
   protected m_testName = "";
   protected m_results: PerformanceTestResultInternal[] = [];
+  protected readonly name: string;
+  protected readonly path: string;
+  protected readonly filters: string[];
 
-  constructor(protected readonly name: string, protected readonly filters: string[]) {}
+  constructor(o: { name: string; path?: string; filters?: string[] }) {
+    this.path = o.path || "";
+    this.name = o.name;
+    this.filters = o?.filters || [];
+  }
 
   protected i = (str: string) => "    ".repeat(this.m_indent).concat(str.toString());
   protected ii = () => this.m_indent++;
@@ -85,6 +93,7 @@ export class ConsoleReporter implements PerformanceResultReporter {
   runStarted(): void {
     this.m_failedTests = [];
     this.ddash(`Running ${this.name}`);
+    this.dash(`Path: ${this.path ? path.resolve(this.path) : ""}`);
     this.dash(`Filters: [${this.filters.map(f => JSON.stringify(f)).join(", ")}]`);
     this.dash("Global test environment set-up.");
   }

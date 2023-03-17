@@ -40,7 +40,7 @@ export const run = async (path: string, name: string): Promise<void> => {
 
   const loader = new TestSuiteLoader(new FileSystem(fs));
   // Using our own custom reporter
-  const reporters = [new ConsoleReporter(name, filters)];
+  const reporters = [new ConsoleReporter({ path, name, filters })];
   const test_runner = new TestRunner(reporters);
   // Using our own custom test suite runner
   const test_suite_runner = new YTestSuiteRunner(test_runner, reporters);
