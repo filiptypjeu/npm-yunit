@@ -22,6 +22,15 @@ export default class UTestFramework extends YTestSuite {
     }
 
     @Test()
+    async Test_Remove_Created_Resource() {
+        this.registerResource({ name: "Test" });
+        this.createResource("Test");
+        Assert.throws(() => this.removeResource("Test"));
+        this.deleteResource("Test");
+        this.removeResource("Test");
+    }
+
+    @Test()
     async Test_Register_Resource() {
         let t = 10;
         Assert.throws(() => this.getResource("Test"));
@@ -59,9 +68,11 @@ export default class UTestFramework extends YTestSuite {
 
         this.createResource("Test");
         Assert.equal(true, this.getResource("Test"));
+        Assert.true(this.isResourceCreated("Test"));
 
         this.deleteResource("Test");
         Assert.equal(false, this.getResource("Test"));
+        Assert.false(this.isResourceCreated("Test"));
 
         this.removeResource("Test");
     }
@@ -81,8 +92,45 @@ export default class UTestFramework extends YTestSuite {
         })
         this.createResource("Test");
         Assert.equal(true, this.getResource("Test2"));
+        Assert.true(this.isResourceCreated("Test"));
+        Assert.true(this.isResourceCreated("Test2"));
 
+        this.deleteAllResources();
         this.removeResource("Test");
         this.removeResource("Test2");
+    }
+
+    @Test()
+    async Test_DeleteAllResources_Correct_Order() {
+        let deletes: string[] = [];
+        this.registerResource({
+            name: "A",
+            atDelete: () => deletes.push("A"),
+        });
+        this.registerResource({
+            name: "B",
+            dependencies: ["A"],
+            atDelete: () => deletes.push("B"),
+        });
+        this.registerResource({
+            name: "C",
+            atDelete: () => deletes.push("C"),
+        });
+
+        this.createResource("C");
+        this.createResource("B");
+        this.deleteAllResources();
+        Assert.equal(["B", "A", "C"], deletes);
+
+        deletes = [];
+        this.createResource("A");
+        this.createResource("C");
+        this.createResource("B");
+        this.deleteAllResources();
+        Assert.equal(["B", "C", "A"], deletes);
+
+        this.removeResource("A");
+        this.removeResource("B");
+        this.removeResource("C");
     }
 }

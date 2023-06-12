@@ -12,7 +12,6 @@ export interface ResourceSetup<T, R extends string = string> {
 }
 
 interface ResourceSetupInternal<T, R extends string> extends ResourceSetup<T, R> {
-  isCreated: boolean;
   resource?: T;
 }
 
@@ -44,6 +43,7 @@ export const Test = () => (suite: TestSuite, method_name: string, info: TestInfo
 export abstract class YTestSuite<R extends string = string> extends TestSuite {
   public reporters: PerformanceResultReporter[] = [];
   protected resourceSetups: ResourceSetupInternal<unknown, R>[] = [];
+  protected createdResources: R[] = [];
 
   protected findResourceSetup(name: R): ResourceSetupInternal<unknown, R> {
     const r = this.resourceSetups.find(r => r.name === name);
@@ -57,15 +57,22 @@ export abstract class YTestSuite<R extends string = string> extends TestSuite {
   public registerResource(setup: ResourceSetup<any, R>) {
     if (this.resourceSetups.find(r => r.name === setup.name))
       throw new Error(`Can not register duplicate test framework resource '${setup.name}'`);
-    this.resourceSetups.push({ ...setup, isCreated: false });
+    this.resourceSetups.push({ ...setup });
   }
 
   /**
-   * Remove a registered resource from the test suite.
+   * Remove a registered resource from the test suite. A resource can not be removed while it's created.
    */
-  public removeResource(name: string) {
+  public removeResource(name: R) {
+    // Check if created
+    if (this.isResourceCreated(name)) throw new Error(`Can not remove created resource '${name}'`);
+
     if (!this.resourceSetups.find(r => r.name === name)) throw new Error(`Test framework resource '${name}' does not exist`);
     this.resourceSetups = this.resourceSetups.filter(r => r.name !== name);
+  }
+
+  public isResourceCreated(name: R): boolean {
+    return this.createdResources.includes(name);
   }
 
   /**
@@ -73,7 +80,7 @@ export abstract class YTestSuite<R extends string = string> extends TestSuite {
    */
   public getResource(name: R): unknown {
     const setup = this.findResourceSetup(name);
-    if (setup.isCreated) return setup.resource;
+    if (this.isResourceCreated(name)) return setup.resource;
     if (setup.defaultValue !== undefined) return setup.defaultValue;
     throw new Error(`Resource '${name}' not created`);
   }
@@ -82,46 +89,45 @@ export abstract class YTestSuite<R extends string = string> extends TestSuite {
    * Create a registered resource.
    */
   public createResource(name: R, throwIfExists: boolean = true): void {
+    // Check if already created
+    if (this.isResourceCreated(name)) {
+      if (throwIfExists) throw new Error(`Resource '${name}' is already created`);
+      return;
+    }
+
     const setup = this.findResourceSetup(name);
 
     // Create dependencies first
     for (const d of setup.dependencies || []) this.createResource(d, false);
 
-    // Check if already created
-    if (setup.isCreated) {
-      if (throwIfExists) throw new Error(`Resource ${name} is already created`);
-      return;
-    }
+    this.createdResources.push(name);
 
     if (!setup.create) return;
-
     setup.resource = setup.create();
-    setup.isCreated = true;
   }
 
   /**
    * Delete a registered resource, assuming it has been created.
    */
   public deleteResource(name: R): void {
-    const setup = this.findResourceSetup(name);
-
     // Check if already deleted
-    if (!setup.isCreated) throw new Error(`Resource '${name}' is not created`);
+    if (!this.isResourceCreated(name)) throw new Error(`Resource '${name}' is not created`);
+
+    const setup = this.findResourceSetup(name);
 
     // Do nothing if the resource can not be released
     if (setup.atDelete) setup.atDelete(setup.resource);
 
     setup.resource = undefined;
-    setup.isCreated = false;
+    this.createdResources = this.createdResources.filter(n => n !== name);
   }
 
   /**
    * Delete all created resources.
    */
   public deleteAllResources(): void {
-    for (const r of this.resourceSetups) {
-      if (!r.isCreated) continue;
-      this.deleteResource(r.name);
+    for (const name of this.createdResources.reverse()) {
+      this.deleteResource(name);
     }
   }
 
