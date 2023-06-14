@@ -33,9 +33,6 @@ export interface PerformanceSuiteSetup<T extends PerformaceParameter> extends Om
   };
 }
 
-// Export Assert from xunit.ts too so that the unittests files don't have to import anything from xunit.ts at all.
-export { Assert } from "xunit.ts";
-
 /**
  * Our own test method decorator because the one in xunit.ts has an ugly default way of writing the test names.
  */
