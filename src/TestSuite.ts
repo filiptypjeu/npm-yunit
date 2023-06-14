@@ -56,8 +56,7 @@ export abstract class YTestSuite<R extends string = string> extends TestSuite {
    * Register a resource to the test suite.
    */
   public registerResource(setup: ResourceSetup<any, R>) {
-    if (this.resourceSetups.find(r => r.name === setup.name))
-      throw new Error(`Can not register resource '${setup.name}': Duplicate name`);
+    if (this.resourceSetups.find(r => r.name === setup.name)) throw new Error(`Can not register resource '${setup.name}': Duplicate name`);
     this.resourceSetups.push({ ...setup });
   }
 
@@ -65,8 +64,7 @@ export abstract class YTestSuite<R extends string = string> extends TestSuite {
    * Remove a registered resource from the test suite. A resource can not be removed while it's created.
    */
   public removeResource(name: R) {
-    if (this.isResourceCreated(name))
-      throw new Error(`Can not remove resource '${name}': Currently created`);
+    if (this.isResourceCreated(name)) throw new Error(`Can not remove resource '${name}': Currently created`);
     this.findResourceSetupOrThrow(name);
     this.resourceSetups = this.resourceSetups.filter(r => r.name !== name);
   }
