@@ -1,0 +1,9 @@
+{
+    "reporter": ["text", "lcov"],
+    "include": [
+        "dist/*.js"
+    ],
+    "exclude": [
+        "dist/index.js"
+    ]
+}
