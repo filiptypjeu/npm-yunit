@@ -6,6 +6,7 @@ import { PerformanceResultReporter, PerformanceTestOptions, PerformanceTestResul
 export interface ResourceSetup<T, R extends string = string> {
   name: R;
   dependencies?: R[];
+  // Giving a default value assures that the resource always has value, even if it has not been explicitly created
   defaultValue?: T;
   create?: () => T;
   atDelete?: (resource: T) => void;
@@ -45,9 +46,9 @@ export abstract class YTestSuite<R extends string = string> extends TestSuite {
   protected resourceSetups: ResourceSetupInternal<unknown, R>[] = [];
   protected createdResources: R[] = [];
 
-  protected findResourceSetup(name: R): ResourceSetupInternal<unknown, R> {
+  protected findResourceSetupOrThrow(name: R): ResourceSetupInternal<unknown, R> {
     const r = this.resourceSetups.find(r => r.name === name);
-    if (!r) throw new Error(`Invalid test framework resource '${name}'`);
+    if (!r) throw new Error(`Invalid resource '${name}': Not registered`);
     return r;
   }
 
@@ -56,7 +57,7 @@ export abstract class YTestSuite<R extends string = string> extends TestSuite {
    */
   public registerResource(setup: ResourceSetup<any, R>) {
     if (this.resourceSetups.find(r => r.name === setup.name))
-      throw new Error(`Can not register duplicate test framework resource '${setup.name}'`);
+      throw new Error(`Can not register resource '${setup.name}': Duplicate name`);
     this.resourceSetups.push({ ...setup });
   }
 
@@ -64,10 +65,9 @@ export abstract class YTestSuite<R extends string = string> extends TestSuite {
    * Remove a registered resource from the test suite. A resource can not be removed while it's created.
    */
   public removeResource(name: R) {
-    // Check if created
-    if (this.isResourceCreated(name)) throw new Error(`Can not remove created resource '${name}'`);
-
-    if (!this.resourceSetups.find(r => r.name === name)) throw new Error(`Test framework resource '${name}' does not exist`);
+    if (this.isResourceCreated(name))
+      throw new Error(`Can not remove resource '${name}': Currently created`);
+    this.findResourceSetupOrThrow(name);
     this.resourceSetups = this.resourceSetups.filter(r => r.name !== name);
   }
 
@@ -79,10 +79,10 @@ export abstract class YTestSuite<R extends string = string> extends TestSuite {
    * Get a resource from the test suite, assuming it has been created or have a default value.
    */
   public getResource(name: R): unknown {
-    const setup = this.findResourceSetup(name);
+    const setup = this.findResourceSetupOrThrow(name);
     if (this.isResourceCreated(name)) return setup.resource;
     if (setup.defaultValue !== undefined) return setup.defaultValue;
-    throw new Error(`Resource '${name}' not created`);
+    throw new Error(`Can not get resource '${name}': Not created and no default value`);
   }
 
   /**
@@ -91,11 +91,11 @@ export abstract class YTestSuite<R extends string = string> extends TestSuite {
   public createResource(name: R, throwIfExists: boolean = true): void {
     // Check if already created
     if (this.isResourceCreated(name)) {
-      if (throwIfExists) throw new Error(`Resource '${name}' is already created`);
+      if (throwIfExists) throw new Error(`Can not create resource '${name}': Already created`);
       return;
     }
 
-    const setup = this.findResourceSetup(name);
+    const setup = this.findResourceSetupOrThrow(name);
 
     // Create dependencies first
     for (const d of setup.dependencies || []) this.createResource(d, false);
@@ -111,9 +111,9 @@ export abstract class YTestSuite<R extends string = string> extends TestSuite {
    */
   public deleteResource(name: R): void {
     // Check if already deleted
-    if (!this.isResourceCreated(name)) throw new Error(`Resource '${name}' is not created`);
+    if (!this.isResourceCreated(name)) throw new Error(`Can not delete resource '${name}': Not created`);
 
-    const setup = this.findResourceSetup(name);
+    const setup = this.findResourceSetupOrThrow(name);
 
     // Do nothing if the resource can not be released
     if (setup.atDelete) setup.atDelete(setup.resource);
