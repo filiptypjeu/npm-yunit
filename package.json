@@ -25,9 +25,9 @@
     },
     "repository": {
         "type": "git",
-        "url": "git@github.com:filiptypjeu/yunit.git"
+        "url": "git@github.com:filiptypjeu/npm-yunit.git"
     },
-    "homepage": "https://github.com/filiptypjeu/yunit",
+    "homepage": "https://github.com/filiptypjeu/npm-yunit",
     "author": "Filip Stenbacka",
     "license": "ISC",
     "dependencies": {
