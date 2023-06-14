@@ -6,7 +6,7 @@ import { Assert as OriginalAssert } from "xunit.ts";
 
 // Define our own Assert.throws, adding extra parameters to the AssertionError
 const extended_throws = (expression: () => any, message?: string) => {
-  let result: any;
+  let result: unknown;
   try {
     result = expression();
   } catch (exception) {
@@ -18,16 +18,16 @@ const extended_throws = (expression: () => any, message?: string) => {
     expected: "(expression throws)",
     actual: result,
   });
-}
+};
 
 type AssertType = {
   // Change the typing so that these methods asserts the experssion on the type system level too
-  true: (expression: any , message?: string) => asserts expression is true;
-  false: (expression: any , message?: string) => asserts expression is false;
-  undefined: (expression: any , message?: string) => asserts expression is undefined;
-  defined: <T>(expression: T | undefined , message?: string) => asserts expression is T;
-  null: (expression: any , message?: string) => asserts expression is null;
-  notNull: <T>(expression: T | null , message?: string) => asserts expression is T;
+  true: (expression: any, message?: string) => asserts expression is true;
+  false: (expression: any, message?: string) => asserts expression is false;
+  undefined: (expression: any, message?: string) => asserts expression is undefined;
+  defined: <T>(expression: T | undefined, message?: string) => asserts expression is T;
+  null: (expression: any, message?: string) => asserts expression is null;
+  notNull: <T>(expression: T | null, message?: string) => asserts expression is T;
 
   // The typing for the rest of the methods are unchanged
   equal: typeof OriginalAssert.equal;
@@ -49,7 +49,7 @@ type AssertType = {
 };
 
 // Use our own Assert.throws method
-export const Assert: AssertType =  {
+export const Assert: AssertType = {
   ...OriginalAssert,
   throws: extended_throws,
 };
