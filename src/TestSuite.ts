@@ -100,10 +100,11 @@ export abstract class YTestSuite<R extends string = string> extends TestSuite {
     // Create dependencies first
     for (const d of setup.dependencies || []) this.createResource(d, false);
 
-    this.createdResources.push(name);
+    // Create the actual resource...
+    if (setup.create) setup.resource = setup.create();
 
-    if (!setup.create) return;
-    setup.resource = setup.create();
+    // ...and mark it as created
+    this.createdResources.push(name);
   }
 
   /**

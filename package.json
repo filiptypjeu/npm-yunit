@@ -6,6 +6,7 @@
     "types": "dist/index.d.ts",
     "scripts": {
         "build": "tsc",
+        "dev": "npm run build && npm run test:build && npm run test:run",
         "format": "prettier --write src/**/*.ts",
         "link": "npm run build && npm link",
         "lint": "eslint src --ext .ts",

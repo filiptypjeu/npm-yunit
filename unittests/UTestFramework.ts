@@ -22,6 +22,13 @@ export default class UTestFramework extends YTestSuite {
     }
 
     @Test()
+    async Test_Register_Duplicate_Resource() {
+        this.registerResource({ name: "Test" });
+        Assert.throws(() => this.registerResource({ name: "Test" }));
+        this.removeResource("Test");
+    }
+
+    @Test()
     async Test_Remove_Created_Resource() {
         this.registerResource({ name: "Test" });
         this.createResource("Test");
@@ -132,5 +139,28 @@ export default class UTestFramework extends YTestSuite {
         this.removeResource("A");
         this.removeResource("B");
         this.removeResource("C");
+    }
+
+    @Test()
+    async Test_Is_Resource_Created() {
+        Assert.false(this.isResourceCreated("Test"));
+        this.registerResource({ name: "Test" });
+        Assert.false(this.isResourceCreated("Test"));
+        this.createResource("Test");
+        Assert.true(this.isResourceCreated("Test"));
+        this.deleteResource("Test");
+        Assert.false(this.isResourceCreated("Test"));
+        this.removeResource("Test");
+        Assert.false(this.isResourceCreated("Test"));
+    }
+
+    @Test()
+    async Test_Resource_that_Throws_on_Create() {
+        Assert.false(this.isResourceCreated("Test"));
+        this.registerResource({ name: "Test", create: () => { throw new Error("error"); } });
+        Assert.false(this.isResourceCreated("Test"));
+        Assert.throws(() => this.createResource("Test"))
+        Assert.false(this.isResourceCreated("Test"));
+        this.removeResource("Test");
     }
 }
