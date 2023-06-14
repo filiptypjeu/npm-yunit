@@ -99,4 +99,10 @@ export default class UAssert extends YTestSuite {
         Assert.throws(() => Assert.defined(b));
         Assert.defined(c);
     }
+
+    @Test()
+    async Test_Throws() {
+        Assert.throws(() => { throw new Error("error"); });
+        Assert.throws(() => Assert.throws(() => {}));
+    }
 }
