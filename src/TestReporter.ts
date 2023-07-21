@@ -154,6 +154,7 @@ export class ConsoleReporter implements PerformanceResultReporter {
     const nFailed = this.m_failedTests.length;
     const tTotal = sum(results.flatMap(sr => Object.values(sr.results)).map(r => r.duration));
 
+    this.out();
     this.dash(`Global test environment tear-down`);
     this.ddash(`${nTotal} ${p("test", nTotal)} from ${nSuites} test ${p("suite", nSuites)} ran. (${ms(tTotal)} total)`);
     this.passed(nPassed);
