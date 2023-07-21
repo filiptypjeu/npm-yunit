@@ -11,6 +11,7 @@ import Args from "command-line-args";
 import path from "path";
 
 const isTestSuitePrototype = (proto: unknown): proto is TestSuite => {
+  // XXX: Why not just proto instanceof TestSuite?
   return !!proto && typeof proto === "object" && "getTests" in proto && typeof proto.getTests === "function";
 };
 
@@ -111,10 +112,10 @@ export const run = async (relative_path: string, name: string): Promise<void> =>
   }
 };
 
-const getCallerFile = (function_name: string): string | null => {
+const getCallerFile = (function_name: string): string | null | undefined => {
   const prepareStackTraceOrg = Error.prepareStackTrace;
   const err = new Error();
-  let name: string | null = null;
+  let name: string | null | undefined;
 
   Error.prepareStackTrace = (_, stack) => stack;
 
