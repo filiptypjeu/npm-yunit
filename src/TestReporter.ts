@@ -5,6 +5,7 @@ import { ResultType } from "xunit.ts/dist/src/Framework/ResultType";
 import { AssertionError } from "assert";
 import path from "path";
 import "colors";
+import { PerformanceTestSetup, PerformanceTestResult } from "./TestSuite";
 
 const sum = (a: number[]) => a.reduce((acc, current) => acc + current, 0);
 const ns = (ns: number) => (ns > 1e4 ? us(ns / 1e3) : `${Math.round(ns)} ns`);
@@ -16,31 +17,14 @@ const p = (singular: "test" | "suite", n: number) => {
   return singular + "s";
 };
 
-export interface PerformanceTestOptions {
-  comment?: string;
-  operations: number;
-  warmups: number;
-}
-
-export interface PerformanceTestResult extends PerformanceTestOptions {
-  // The number of operations measured
-  N: number;
-  // Total amount of time for N operations in nanoseconds
-  total: number;
-  // Average time per operation in nanoseconds
-  average: number;
-  // Operations per second
-  perSecond: number;
-}
-
 interface PerformanceTestResultInternal extends PerformanceTestResult {
   suite: string;
   test: string;
 }
 
 export interface PerformanceResultReporter extends ResultReporter {
-  performanceTestStarted(options: PerformanceTestOptions): void;
-  performanceTestErrored(onOperation: number): void;
+  performanceTestStarted(options: PerformanceTestSetup & { warmups: number }): void;
+  performanceTestErrored(onOperation: number, duringWarmup: boolean): void;
   performanceTestEnded(result: PerformanceTestResult): void;
 }
 
@@ -213,16 +197,20 @@ export class ConsoleReporter implements PerformanceResultReporter {
     this.out();
   }
 
-  performanceTestStarted(o: PerformanceTestOptions): void {
+  performanceTestStarted(o: PerformanceTestSetup): void {
     this.ptestStart();
     this.ii();
     if (o.comment) this.out("   Comment:", `${o.comment}`.green);
-    this.out("Operations:", `${o.operations}`.green);
+    if ("targetTime" in o) {
+      this.out("Targt time:", `${o.targetTime} s`.green);
+    } else {
+      this.out("Operations:", `${o.operations}`.green);
+    }
     this.out("   Warmups:", `${o.warmups}`.green);
   }
 
-  performanceTestErrored(onOperation: number): void {
-    this.out(`Failed on operation ${onOperation}`.red);
+  performanceTestErrored(onOperation: number, duringWarmup: boolean): void {
+    this.out(`Failed ${duringWarmup ? "during warmup " : ""}on operation ${onOperation}`.red);
     this.id();
     this.ptestFail();
   }

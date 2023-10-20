@@ -1,7 +1,7 @@
-import { TestSuite } from "xunit.ts";
+import { Assert, TestSuite } from "xunit.ts";
 import TestInfo from "xunit.ts/dist/src/Framework/TestInfo";
 import { hrtime } from "process";
-import { PerformanceResultReporter, PerformanceTestOptions, PerformanceTestResult } from "./TestReporter";
+import { PerformanceResultReporter } from "./TestReporter";
 
 export interface ResourceSetup<T, R extends string = string> {
   name: R;
@@ -16,21 +16,50 @@ interface ResourceSetupInternal<T, R extends string> extends ResourceSetup<T, R>
   resource?: T;
 }
 
-export interface PerformanceTestSetup extends PerformanceTestOptions {
+type PerformaceSuiteParameter = { toString: () => string };
+
+export type PerformanceTestSetup = {
+  comment?: string;
+  // The function that should be timed
   fn: (operation: number) => any;
-}
-
-type PerformaceParameter = { toString: () => string };
-
-export interface PerformanceSuiteSetup<T extends PerformaceParameter> extends Omit<PerformanceTestSetup, "warmups"> {
+} & ({
+  // The exact number of operations that are supposed to be run, including warmups
+  operations: number;
+  // The number of operations that should work as warmup operations and not be included in the timing
   warmups?: number;
-  setup?: {
+} | {
+  // The number of seconds the test performance test should be run
+  targetTime: number;
+  // The number of operations to use for deducing how many operations should be timed
+  warmups: number;
+});
+
+export type PerformanceSuiteSetup<T extends PerformaceSuiteParameter> = {
+  comment?: string;
+  fn: (operation: number) => any;
+  operations: number;
+  warmups?: number;
+  setup: {
     parameters: T[];
     before: (param: T, index: number) => any;
     after?: (param: T, index: number) => any;
     beforeAll?: () => any;
     afterAll?: () => any;
   };
+}
+
+export interface PerformanceTestResult {
+  comment?: string;
+  // The number of warmup operations
+  warmups: number;
+  // The number of operations measured
+  N: number;
+  // Total amount of time for N operations in nanoseconds
+  total: number;
+  // Average time per operation in nanoseconds
+  average: number;
+  // Operations per second
+  perSecond: number;
 }
 
 /**
@@ -142,56 +171,74 @@ export abstract class YTestSuite<R extends string = string> extends TestSuite {
    *
    * XXX: Add averaging over many iterations?
    */
-  protected measure = <T extends PerformaceParameter>(options: PerformanceSuiteSetup<T>) => {
-    const warmups = options.warmups ?? Math.floor(options.operations / 100);
-    const o = { ...options, warmups };
-
-    if (!o.setup) return this.runMeasurement(o);
+  protected measure(o: PerformanceTestSetup): PerformanceTestResult;
+  protected measure<T extends PerformaceSuiteParameter>(o: PerformanceSuiteSetup<T>): Record<string, PerformanceTestResult>;
+  protected measure<T extends PerformaceSuiteParameter>(o: PerformanceTestSetup | PerformanceSuiteSetup<T>): any {
+    if (!("setup" in o)) return this.runMeasurement(o);
 
     if (o.setup.beforeAll) o.setup.beforeAll();
     let i = 0;
+    const result: Record<string, PerformanceTestResult> = {};
     for (const p of o.setup.parameters) {
       const comment = [o.comment, `${p.toString()}`].filter(s => s).join(", ");
       o.setup.before(p, i);
-      this.runMeasurement({ ...o, comment });
+      result[p.toString()] = this.runMeasurement({ ...o, comment });
       if (o.setup.after) o.setup.after(p, i);
       i++;
     }
     if (o.setup.afterAll) o.setup.afterAll();
+    return result;
   };
 
   private runMeasurement = (o: PerformanceTestSetup) => {
-    for (const r of this.reporters) r.performanceTestStarted(o);
+    let warmups: number;
+    let N: number | undefined;
+
+    if ("targetTime" in o) {
+      Assert.true(o.targetTime > 0);
+      Assert.true(o.warmups > 0);
+      warmups = o.warmups;
+    } else {
+      Assert.true(o.operations > 0);
+      warmups = o.warmups ?? Math.floor(o.operations / 100);
+      N = o.operations - warmups;
+      Assert.true(warmups >= 0);
+      Assert.true(N > 0);
+    }
+
+    for (const r of this.reporters) r.performanceTestStarted({ ...o, warmups });
 
     let total: number;
-    let N = o.operations - o.warmups;
     let i = 0;
     try {
-      // Do a short warmup warmup
-      for (; i < 10; i++) {
+      // Do warmup for warmup
+      const WW = Math.floor(warmups / 5);
+      for (; i < WW; i++) {
         o.fn(i);
       }
 
-      // Do a warmup to deduce a good N
+      // Do the rest of the warmup
       const warmupStart = hrtime();
-      for (; i < o.warmups; i++) {
+      for (; i < warmups; i++) {
         o.fn(i);
       }
       const warmupDuration = this.nsSince(warmupStart);
 
-      // Decrease N for the actual iteration if the original N seems too large
-      // Target for a 5 second iteration, but use 6 seconds in the calculation due to the warmup operations usually being slower
-      const avg = warmupDuration / (o.warmups - 10);
-      N = Math.min(N, Math.round(6e9 / avg));
-      const M = o.warmups + N;
+      // Deduce N if only a target time was given
+      if (N === undefined) {
+        const seconds = (o as any).targetTime || 5;
+        const avg = warmupDuration / warmups;
+        N = Math.round(seconds * 1.5e9 / avg);
+      }
 
+      const M = warmups + N;
       const actualStart = hrtime();
       for (; i < M; i++) {
         o.fn(i);
       }
       total = this.nsSince(actualStart);
     } catch (error) {
-      for (const r of this.reporters) r.performanceTestErrored(i);
+      for (const r of this.reporters) r.performanceTestErrored(i, i < warmups);
       throw error;
     }
 
@@ -199,7 +246,8 @@ export abstract class YTestSuite<R extends string = string> extends TestSuite {
     const perSecond = average && Math.floor(1e9 / average);
 
     const result: PerformanceTestResult = {
-      ...o,
+      comment: o.comment,
+      warmups,
       N,
       total,
       average,
@@ -207,5 +255,6 @@ export abstract class YTestSuite<R extends string = string> extends TestSuite {
     };
 
     for (const r of this.reporters) r.performanceTestEnded(result);
+    return result;
   };
 }
