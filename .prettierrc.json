@@ -2,8 +2,11 @@
   "printWidth": 140,
   "semi": true,
   "singleQuote": false,
+  "quoteProps": "as-needed",
   "tabWidth": 2,
-  "trailingComma": "es5",
+  "useTabs": false,
+  "trailingComma": "all",
   "arrowParens": "avoid",
-  "endOfLine": "crlf"
+  "endOfLine": "crlf",
+  "bracketSpacing": true
 }

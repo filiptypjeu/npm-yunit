@@ -22,17 +22,20 @@ export type PerformanceTestSetup = {
   comment?: string;
   // The function that should be timed
   fn: (operation: number) => any;
-} & ({
-  // The exact number of operations that are supposed to be run, including warmups
-  operations: number;
-  // The number of operations that should work as warmup operations and not be included in the timing
-  warmups?: number;
-} | {
-  // The number of seconds the test performance test should be run
-  targetTime: number;
-  // The number of operations to use for deducing how many operations should be timed
-  warmups: number;
-});
+} & (
+  | {
+      // The exact number of operations that are supposed to be run, including warmups
+      operations: number;
+      // The number of operations that should work as warmup operations and not be included in the timing
+      warmups?: number;
+    }
+  | {
+      // The number of seconds the test performance test should be run
+      targetTime: number;
+      // The number of operations to use for deducing how many operations should be timed
+      warmups: number;
+    }
+);
 
 export type PerformanceSuiteSetup<T extends PerformaceSuiteParameter> = {
   comment?: string;
@@ -46,7 +49,7 @@ export type PerformanceSuiteSetup<T extends PerformaceSuiteParameter> = {
     beforeAll?: () => any;
     afterAll?: () => any;
   };
-}
+};
 
 export interface PerformanceTestResult {
   comment?: string;
@@ -188,7 +191,7 @@ export abstract class YTestSuite<R extends string = string> extends TestSuite {
     }
     if (o.setup.afterAll) o.setup.afterAll();
     return result;
-  };
+  }
 
   private runMeasurement = (o: PerformanceTestSetup) => {
     let warmups: number;
@@ -226,9 +229,10 @@ export abstract class YTestSuite<R extends string = string> extends TestSuite {
 
       // Deduce N if only a target time was given
       if (N === undefined) {
+        // eslint-disable-next-line  @typescript-eslint/no-unsafe-assignment
         const seconds = (o as any).targetTime || 5;
         const avg = warmupDuration / warmups;
-        N = Math.round(seconds * 1.5e9 / avg);
+        N = Math.round((seconds * 1.5e9) / avg);
       }
 
       const M = warmups + N;

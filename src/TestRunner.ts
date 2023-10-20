@@ -52,7 +52,10 @@ class YTestSuiteLoader extends TestSuiteLoader {
 }
 
 class YTestSuiteRunner extends TestSuiteRunner {
-  constructor(runner: TestRunner, public readonly rs: ResultReporter[]) {
+  constructor(
+    runner: TestRunner,
+    public readonly rs: ResultReporter[],
+  ) {
     super(runner, rs);
   }
 
@@ -100,7 +103,7 @@ export const run = async (relative_path: string, name: string): Promise<void> =>
   try {
     await runner.runAll(
       absolute_path,
-      filters.map(f => new RegExp(f))
+      filters.map(f => new RegExp(f)),
     );
   } catch (error) {
     if (error instanceof Error) {

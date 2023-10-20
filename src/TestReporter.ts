@@ -197,7 +197,7 @@ export class ConsoleReporter implements PerformanceResultReporter {
     this.out();
   }
 
-  performanceTestStarted(o: PerformanceTestSetup): void {
+  performanceTestStarted(o: Parameters<PerformanceResultReporter["performanceTestStarted"]>[0]): void {
     this.ptestStart();
     this.ii();
     if (o.comment) this.out("   Comment:", `${o.comment}`.green);
