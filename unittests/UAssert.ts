@@ -106,4 +106,10 @@ export default class UAssert extends YTestSuite {
         Assert.throws(() => { throw new Error("error"); });
         Assert.throws(() => Assert.throws(() => {}));
     }
+
+    @Test()
+    async Test_AreEqual_and_AreNotEqual() {
+        Assert.areEqual(1, 1);
+        Assert.areNotEqual(1, -1);
+    }
 }

@@ -44,6 +44,10 @@ type AssertType = {
   notNull: typeof extended_notNull;
   throws: typeof extended_throws;
 
+  // Completely new
+  areEqual: typeof OriginalAssert.equal;
+  areNotEqual: typeof OriginalAssert.notEqual;
+
   // The typing for the rest of the methods are unchanged
   equal: typeof OriginalAssert.equal;
   notEqual: typeof OriginalAssert.notEqual;
@@ -67,4 +71,6 @@ export const Assert: AssertType = {
   ...OriginalAssert,
   notNull: extended_notNull,
   throws: extended_throws,
+  areEqual: OriginalAssert.equal,
+  areNotEqual: OriginalAssert.notEqual,
 };
