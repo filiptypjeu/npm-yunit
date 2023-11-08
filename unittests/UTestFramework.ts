@@ -163,4 +163,29 @@ export default class UTestFramework extends YTestSuite {
         Assert.false(this.isResourceCreated("Test"));
         this.removeResource("Test");
     }
+
+    @Test()
+    async Test_Create_Resources_in_Correct_Order() {
+        const order: string[] = [];
+        this.registerResource({
+            name: "A",
+            create: () => order.push("A"),
+        });
+        this.registerResource({
+            name: "B",
+            dependencies: ["A"],
+            create: () => order.push("B"),
+        });
+        this.registerResource({
+            name: "C",
+            create: () => order.push("C"),
+        });
+        this.registerResource({
+            name: "D",
+            create: () => order.push("D"),
+        });
+
+        this.createResources(["C", "B"]);
+        Assert.equal(order, ["A", "B", "C"]);
+    }
 }
