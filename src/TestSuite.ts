@@ -138,6 +138,9 @@ export abstract class YTestSuite<R extends string = string> extends TestSuite {
    * Create registered resources in the correct order. The correct order is the order in which they are registered to the Suite, not the order given in the parameter here.
    */
   public createResources(names: R[], throwIfExists: boolean = true): void {
+    // Check that all the given resources are registered first
+    names.forEach(name => this.findResourceSetupOrThrow(name));
+
     const correctOrder = this.resourceSetups.map(r => r.name).filter(name => names.includes(name));
     for (const name of correctOrder) this.createResource(name, throwIfExists);
   }

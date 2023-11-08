@@ -188,4 +188,9 @@ export default class UTestFramework extends YTestSuite {
         this.createResources(["C", "B"]);
         Assert.equal(order, ["A", "B", "C"]);
     }
+
+    @Test()
+    async Test_Create_Resources_Nonexistant_Resource() {
+        Assert.throws(() => this.createResources(["INVALID"]));
+    }
 }
