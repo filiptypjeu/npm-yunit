@@ -21,7 +21,7 @@
         "test:run": "node dist-unittests/index.js",
         "test-coverage": "npm run test:link && npm run test:build && npm run test-coverage:run",
         "test-coverage:run": "nyc npm run test:run",
-        "version": "npm run format && git add -A src"
+        "version": "git add -A src"
     },
     "repository": {
         "type": "git",
