@@ -33,6 +33,7 @@ export default class UTestFramework extends YTestSuite {
         this.registerResource({ name: "Test" });
         this.createResource("Test");
         Assert.throws(() => this.removeResource("Test"));
+        Assert.throws(() => this.removeAllResources());
         this.deleteResource("Test");
         this.removeResource("Test");
     }
@@ -187,10 +188,26 @@ export default class UTestFramework extends YTestSuite {
 
         this.createResources(["C", "B"]);
         Assert.equal(order, ["A", "B", "C"]);
+
+        this.deleteAllResources();
+        this.removeAllResources();
     }
 
     @Test()
     async Test_Create_Resources_Nonexistant_Resource() {
         Assert.throws(() => this.createResources(["INVALID"]));
+    }
+
+    @Test()
+    async Test_Remove_Resource_Return_Value() {
+        let a = 0;
+        this.registerResource({
+            name: "A",
+            create: () => a++,
+        });
+        const setup = this.removeResource("A");
+        Assert.notNull(setup.create);
+        setup.create();
+        Assert.equal(1, a);
     }
 }

@@ -92,10 +92,23 @@ export abstract class YTestSuite<R extends string = string> extends TestSuite {
   /**
    * Remove a registered resource from the test suite. A resource can not be removed while it's created.
    */
-  public removeResource(name: R) {
+  public removeResource(name: R): ResourceSetup<unknown, R> {
     if (this.isResourceCreated(name)) throw new Error(`Can not remove resource '${name}': Currently created`);
-    this.findResourceSetupOrThrow(name);
+    // Make sure the resource exist
+    const resource = this.findResourceSetupOrThrow(name);
     this.resourceSetups = this.resourceSetups.filter(r => r.name !== name);
+    return resource;
+  }
+
+  /**
+   * Remove all registered resources from the test suite. Throws an error if any resource is created.
+   */
+  public removeAllResources(): void {
+    if (this.createdResources.length) throw new Error(`Can not remove all resources: Resources [${this.createdResources.join(", ")}] currently created`);
+
+    for (const r of this.resourceSetups.reverse()) {
+      this.removeResource(r.name);
+    }
   }
 
   public isResourceCreated(name: R): boolean {
