@@ -104,7 +104,8 @@ export abstract class YTestSuite<R extends string = string> extends TestSuite {
    * Remove all registered resources from the test suite. Throws an error if any resource is created.
    */
   public removeAllResources(): void {
-    if (this.createdResources.length) throw new Error(`Can not remove all resources: Resources [${this.createdResources.join(", ")}] currently created`);
+    if (this.createdResources.length)
+      throw new Error(`Can not remove all resources: Resources [${this.createdResources.join(", ")}] currently created`);
 
     for (const r of this.resourceSetups.reverse()) {
       this.removeResource(r.name);
