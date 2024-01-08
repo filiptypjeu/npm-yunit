@@ -76,45 +76,59 @@ export class YTestRunner extends TestRunner {
   public override async runTest(name: string, info: TestInfo, suite: YTestSuite): Promise<TestResult> {
     await Promise.all(suite.reporters.map(r => r.testStarted(suite, name)));
 
-    if (info.value === undefined) {
-      await Promise.all(suite.reporters.map(r => r.testIncomplete(suite, name)));
-      return new TestResult(ResultType.Incomplete, 0);
-    }
-
-    await suite.runBeforeEachTest();
-
-    let result: TestResult;
-    const start = process.hrtime();
-    try {
-      await info.value.call(suite);
-      const duration = YTestSuite.msSince(start);
-      result = new TestResult(ResultType.Passed, duration);
-
-    } catch (error) {
-      const duration = YTestSuite.msSince(start);
-      const typedError = error as Error;
-      if (typedError instanceof AssertionError) {
-        result = new TestResult(ResultType.Failed, duration, typedError);
-      } else {
-        result = new TestResult(ResultType.Error, duration, typedError);
-      }
-    }
+    const result = info.value ? (await this.run(suite, info.value)) : new TestResult(ResultType.Incomplete, 0);
 
     switch (result.type) {
+      case ResultType.Incomplete:
+        await Promise.all(suite.reporters.map(r => r.testIncomplete(suite, name)));
+        break;
+
       case ResultType.Passed:
         await Promise.all(suite.reporters.map(r => r.testPassed(suite, name, result.duration)));
         break;
 
-      case ResultType.Error:
+      case ResultType.Failed:
         await Promise.all(suite.reporters.map(r => r.testFailed(suite, name, result.error as AssertionError, result.duration)));
         break;
 
-      case ResultType.Failed:
-        await Promise.all(suite.reporters.map(r => r.testErrored(suite, name, result.error!, result.duration)));
+      case ResultType.Error:
+        await Promise.all(suite.reporters.map(r => r.testErrored(suite, name, result.error as Error, result.duration)));
         break;
     }
 
-    await suite.runAfterEachTest(result);
+    return result;
+  }
+
+  protected async run(suite: YTestSuite, fn: () => Promise<void>): Promise<TestResult>
+  {
+    try {
+      await suite.runBeforeEachTest();
+    } catch (e) {
+      return new TestResult(ResultType.Error, 0, e as Error);
+    }
+
+    let result: TestResult;
+    const start = process.hrtime();
+    try {
+      await fn.call(suite);
+      const duration = YTestSuite.msSince(start);
+      result = new TestResult(ResultType.Passed, duration);
+
+    } catch (e) {
+      const duration = YTestSuite.msSince(start);
+      if (e instanceof AssertionError) {
+        result = new TestResult(ResultType.Failed, duration, e);
+      } else {
+        result = new TestResult(ResultType.Error, duration, e as Error);
+      }
+    }
+
+    try {
+      await suite.runAfterEachTest(result);
+    } catch (e) {
+      if (result.type === ResultType.Passed)
+        result = new TestResult(ResultType.Error, result.duration, e as Error);
+    }
 
     return result;
   }
