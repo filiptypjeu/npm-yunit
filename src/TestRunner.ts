@@ -76,7 +76,7 @@ export class YTestRunner extends TestRunner {
   public override async runTest(name: string, info: TestInfo, suite: YTestSuite): Promise<TestResult> {
     await Promise.all(suite.reporters.map(r => r.testStarted(suite, name)));
 
-    const result = info.value ? (await this.run(suite, info.value)) : new TestResult(ResultType.Incomplete, 0);
+    const result = info.value ? await this.run(suite, info.value) : new TestResult(ResultType.Incomplete, 0);
 
     switch (result.type) {
       case ResultType.Incomplete:
@@ -99,8 +99,7 @@ export class YTestRunner extends TestRunner {
     return result;
   }
 
-  protected async run(suite: YTestSuite, fn: () => Promise<void>): Promise<TestResult>
-  {
+  protected async run(suite: YTestSuite, fn: () => Promise<void>): Promise<TestResult> {
     try {
       await suite.runBeforeEachTest();
     } catch (e) {
@@ -113,7 +112,6 @@ export class YTestRunner extends TestRunner {
       await fn.call(suite);
       const duration = YTestSuite.msSince(start);
       result = new TestResult(ResultType.Passed, duration);
-
     } catch (e) {
       const duration = YTestSuite.msSince(start);
       if (e instanceof AssertionError) {
@@ -126,8 +124,7 @@ export class YTestRunner extends TestRunner {
     try {
       await suite.runAfterEachTest(result);
     } catch (e) {
-      if (result.type === ResultType.Passed)
-        result = new TestResult(ResultType.Error, result.duration, e as Error);
+      if (result.type === ResultType.Passed) result = new TestResult(ResultType.Error, result.duration, e as Error);
     }
 
     return result;

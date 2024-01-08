@@ -186,14 +186,15 @@ export abstract class YTestSuite<R extends string = string> extends TestSuite {
   }
 
   /**
-   * Method that gets called before each test starts.
+   * Method that gets called before each test starts. Override if needed.
    */
   public async runBeforeEachTest(): Promise<void> {}
 
   /**
-   * Method that gets called after each test ends.
+   * Method that gets called after each test ends. Override if needed.
    */
-  public async runAfterEachTest(_result: TestResult): Promise<void> {}
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public async runAfterEachTest(_resultSoFar: TestResult): Promise<void> {}
 
   static msSince = (start: [number, number]) => {
     const [s, ns] = hrtime(start);
