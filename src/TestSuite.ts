@@ -2,6 +2,7 @@ import { Assert, TestSuite } from "xunit.ts";
 import TestInfo from "xunit.ts/dist/src/Framework/TestInfo";
 import { hrtime } from "process";
 import { PerformanceResultReporter } from "./TestReporter";
+import TestResult from "xunit.ts/dist/src/Framework/TestResult";
 
 export interface ResourceSetup<T, R extends string = string> {
   name: R;
@@ -184,12 +185,22 @@ export abstract class YTestSuite<R extends string = string> extends TestSuite {
     }
   }
 
-  protected msSince = (start: [number, number]) => {
+  /**
+   * Method that gets called before each test starts.
+   */
+  public async runBeforeEachTest(): Promise<void> {}
+
+  /**
+   * Method that gets called after each test ends.
+   */
+  public async runAfterEachTest(_result: TestResult): Promise<void> {}
+
+  static msSince = (start: [number, number]) => {
     const [s, ns] = hrtime(start);
     return s * 1e3 + ns / 1e6;
   };
 
-  protected nsSince = (start: [number, number]) => {
+  static nsSince = (start: [number, number]) => {
     const [s, ns] = hrtime(start);
     return s * 1e9 + ns;
   };
@@ -250,7 +261,7 @@ export abstract class YTestSuite<R extends string = string> extends TestSuite {
       for (; i < warmups; i++) {
         o.fn(i);
       }
-      const warmupDuration = this.nsSince(warmupStart);
+      const warmupDuration = YTestSuite.nsSince(warmupStart);
 
       // Deduce N if only a target time was given
       if (N === undefined) {
@@ -265,7 +276,7 @@ export abstract class YTestSuite<R extends string = string> extends TestSuite {
       for (; i < M; i++) {
         o.fn(i);
       }
-      total = this.nsSince(actualStart);
+      total = YTestSuite.nsSince(actualStart);
     } catch (error) {
       for (const r of this.reporters) r.performanceTestErrored(i, i < warmups);
       throw error;

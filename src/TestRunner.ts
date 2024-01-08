@@ -3,12 +3,16 @@ import TestSuiteLoader from "xunit.ts/dist/src/Runners/TestSuiteLoader";
 import TestRunner from "xunit.ts/dist/src/Runners/TestRunner";
 import TestSuite from "xunit.ts/dist/src/Framework/TestSuite";
 import TestSuiteRunner from "xunit.ts/dist/src/Runners/TestSuiteRunner";
+import TestInfo from "xunit.ts/dist/src/Framework/TestInfo";
+import TestResult from "xunit.ts/dist/src/Framework/TestResult";
+import { ResultType } from "xunit.ts/dist/src/Framework/ResultType";
 import Runner from "xunit.ts/dist/src/Runners/Runner";
 import FileSystem from "xunit.ts/dist/src/IO/FileSystem";
 import * as fs from "fs/promises";
 import ResultReporter from "xunit.ts/dist/src/Reporters/ResultReporter";
 import Args from "command-line-args";
 import path from "path";
+import { AssertionError } from "assert";
 
 const isTestSuitePrototype = (proto: unknown): proto is TestSuite => {
   // XXX: Why not just proto instanceof TestSuite?
@@ -53,7 +57,7 @@ class YTestSuiteLoader extends TestSuiteLoader {
 
 class YTestSuiteRunner extends TestSuiteRunner {
   constructor(
-    runner: TestRunner,
+    runner: YTestRunner,
     public readonly rs: ResultReporter[],
   ) {
     super(runner, rs);
@@ -65,6 +69,54 @@ class YTestSuiteRunner extends TestSuiteRunner {
     this.rs.forEach(r => isPerfReporter(r) && suite.reporters.push(r));
 
     return super.runSuite(suite, filters);
+  }
+}
+
+export class YTestRunner extends TestRunner {
+  public override async runTest(name: string, info: TestInfo, suite: YTestSuite): Promise<TestResult> {
+    await Promise.all(suite.reporters.map(r => r.testStarted(suite, name)));
+
+    if (info.value === undefined) {
+      await Promise.all(suite.reporters.map(r => r.testIncomplete(suite, name)));
+      return new TestResult(ResultType.Incomplete, 0);
+    }
+
+    await suite.runBeforeEachTest();
+
+    let result: TestResult;
+    const start = process.hrtime();
+    try {
+      await info.value.call(suite);
+      const duration = YTestSuite.msSince(start);
+      result = new TestResult(ResultType.Passed, duration);
+
+    } catch (error) {
+      const duration = YTestSuite.msSince(start);
+      const typedError = error as Error;
+      if (typedError instanceof AssertionError) {
+        result = new TestResult(ResultType.Failed, duration, typedError);
+      } else {
+        result = new TestResult(ResultType.Error, duration, typedError);
+      }
+    }
+
+    switch (result.type) {
+      case ResultType.Passed:
+        await Promise.all(suite.reporters.map(r => r.testPassed(suite, name, result.duration)));
+        break;
+
+      case ResultType.Error:
+        await Promise.all(suite.reporters.map(r => r.testFailed(suite, name, result.error as AssertionError, result.duration)));
+        break;
+
+      case ResultType.Failed:
+        await Promise.all(suite.reporters.map(r => r.testErrored(suite, name, result.error!, result.duration)));
+        break;
+    }
+
+    await suite.runAfterEachTest(result);
+
+    return result;
   }
 }
 
@@ -94,7 +146,7 @@ export const run = async (relative_path: string, name: string): Promise<void> =>
 
   // Using our own custom reporter
   const reporters = [new ConsoleReporter({ path: absolute_path, name, filters })];
-  const test_runner = new TestRunner(reporters);
+  const test_runner = new YTestRunner(reporters);
   // Using our own custom test suite runner
   const test_suite_runner = new YTestSuiteRunner(test_runner, reporters);
 
