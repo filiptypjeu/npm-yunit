@@ -1,6 +1,6 @@
 import { YTestSuite, Test, Assert } from "yunit";
 
-export default class UTestFramework extends YTestSuite {
+export default class UResources extends YTestSuite {
     @Test()
     async Test_Delete_All_Resources_OK() {
         this.deleteAllResources();
