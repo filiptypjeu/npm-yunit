@@ -40,6 +40,7 @@ type AssertType = {
   undefined: (expression: any, message?: string) => asserts expression is undefined;
   defined: <T>(expression: T | undefined, message?: string) => asserts expression is T;
   null: (expression: any, message?: string) => asserts expression is null;
+  instanceOf: <T>(type: T, expression: any, message?: string) => asserts expression is T;
 
   notNull: typeof extended_notNull;
   throws: typeof extended_throws;
@@ -62,7 +63,6 @@ type AssertType = {
   stringDoesNotStartWIth: typeof OriginalAssert.stringDoesNotStartWIth;
   stringEndsWith: typeof OriginalAssert.stringEndsWith;
   stringDoesNotEndWith: typeof OriginalAssert.stringDoesNotEndWith;
-  instanceOf: typeof OriginalAssert.instanceOf;
   doesNotThrow: typeof OriginalAssert.doesNotThrow;
 };
 

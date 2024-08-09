@@ -1,5 +1,7 @@
 import { YTestSuite, Test, Assert } from "yunit";
 
+class MyClass {}
+
 export default class UAssert extends YTestSuite {
     @Test()
     async Test_True_Typing() {
@@ -72,6 +74,22 @@ export default class UAssert extends YTestSuite {
         Assert.equal(1, f(1));
         Assert.throws(() => f(null));
         Assert.throws(() => f(undefined));
+    }
+
+    @Test()
+    async Test_InstanceOf_Typing() {
+        const f = (instance: unknown): MyClass => {
+            Assert.instanceOf(MyClass, instance);
+            // This should compile since the Assert.instanceOf forces the argument to be of the specified instance
+            return instance;
+        }
+
+        const c = new MyClass();
+        Assert.equal(c, f(c));
+        Assert.throws(() => f(null));
+        Assert.throws(() => f(undefined));
+        Assert.throws(() => f(1));
+        Assert.throws(() => f("1"));
     }
 
     @Test()
