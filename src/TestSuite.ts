@@ -38,14 +38,10 @@ export type PerformanceTestSetup = {
     }
 );
 
-export type PerformanceSuiteSetup<T extends PerformaceSuiteParameter> = {
-  comment?: string;
-  fn: (operation: number) => any;
-  operations: number;
-  warmups?: number;
+export type PerformanceSuiteSetup<T extends PerformaceSuiteParameter> = PerformanceTestSetup & {
   setup: {
     parameters: T[];
-    before: (param: T, index: number) => any;
+    before?: (param: T, index: number) => any;
     after?: (param: T, index: number) => any;
     beforeAll?: () => any;
     afterAll?: () => any;
@@ -221,7 +217,7 @@ export abstract class YTestSuite<R extends string = string> extends TestSuite {
     const result: Record<string, PerformanceTestResult> = {};
     for (const p of o.setup.parameters) {
       const comment = [o.comment, `${p.toString()}`].filter(s => s).join(", ");
-      o.setup.before(p, i);
+      if (o.setup.before) o.setup.before(p, i);
       result[p.toString()] = this.runMeasurement({ ...o, comment });
       if (o.setup.after) o.setup.after(p, i);
       i++;

@@ -100,6 +100,25 @@ export default class UTestBenchmark extends YTestSuite {
     }
 
     @Test()
+    async TargetTime_In_Suite() {
+        let a = 0;
+
+        const result = this.measure({
+            fn: () => a++,
+            targetTime: 1,
+            warmups: 100000,
+            setup: {
+                parameters: ["a", "b", "c"],
+            },
+        });
+
+        Assert.equal(100000, result["a"].warmups);
+        Assert.equal(100000, result["b"].warmups);
+        Assert.equal(100000, result["c"].warmups);
+        Assert.equal(a, result["a"].warmups + result["a"].N + result["b"].warmups + result["b"].N + result["c"].warmups + result["c"].N);
+    }
+
+    @Test()
     async Operation_Index() {
         const a: number[] = [];
 
