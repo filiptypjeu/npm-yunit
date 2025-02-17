@@ -7,14 +7,13 @@
     "scripts": {
         "build": "tsc",
         "dev": "npm run build && npm run test:build && npm run test:run",
-        "format": "prettier --write src/**/*.ts",
         "link": "npm run build && npm link",
         "lint": "eslint src --ext .ts",
         "lint-fix": "eslint src --ext .ts --fix",
         "postversion": "git push && git push --tags",
         "prepare": "npm run build",
         "prepublishOnly": "npm test && npm run lint",
-        "preversion": "npm run format && npm run lint",
+        "preversion": "npm run lint",
         "test": "npm run test:link && npm run test:build && npm run test:run",
         "test:link": "npm run link && npm link yunit",
         "test:build": "npx tsc -p unittests",
@@ -43,9 +42,7 @@
         "@typescript-eslint/eslint-plugin": "^6.8.0",
         "@typescript-eslint/parser": "^6.8.0",
         "eslint": "^8.51.0",
-        "eslint-config-prettier": "^9.0.0",
         "nyc": "^15.1.0",
-        "prettier": "^3.0.3",
         "typescript": "^5.1.6"
     },
     "files": [
