@@ -33,6 +33,23 @@ const extended_throws = (expression: () => any, message?: string) => {
   });
 };
 
+const throws_exception = <T extends Error>(expression: () => any, error_class: new (...args: any[]) => T, message?: string) => {
+  let result: unknown;
+  try {
+    result = expression();
+  } catch (exception) {
+    if (exception instanceof error_class) return;
+
+    throw new AssertionError({
+      message: message || "Expression threw exception of the wrong class",
+      expected: `Exception of class '${error_class.name}'`,
+      actual: `Exception of class '${(exception as Error).name}'`,
+    });
+  }
+
+  extended_throws(() => result, message);
+};
+
 type AssertType = {
   // Change the typing so that these methods asserts the experssion on the type system level too
   true: (expression: any, message?: string) => asserts expression is true;
@@ -48,6 +65,7 @@ type AssertType = {
   // Completely new
   areEqual: typeof OriginalAssert.equal;
   areNotEqual: typeof OriginalAssert.notEqual;
+  throwsException: typeof throws_exception;
 
   // The typing for the rest of the methods are unchanged
   equal: typeof OriginalAssert.equal;
@@ -64,6 +82,8 @@ type AssertType = {
   stringEndsWith: typeof OriginalAssert.stringEndsWith;
   stringDoesNotEndWith: typeof OriginalAssert.stringDoesNotEndWith;
   doesNotThrow: typeof OriginalAssert.doesNotThrow;
+
+  AssertionError: typeof AssertionError;
 };
 
 // Use our own Assert.throws method
@@ -73,4 +93,6 @@ export const Assert: AssertType = {
   throws: extended_throws,
   areEqual: OriginalAssert.equal,
   areNotEqual: OriginalAssert.notEqual,
+  throwsException: throws_exception,
+  AssertionError: AssertionError,
 };

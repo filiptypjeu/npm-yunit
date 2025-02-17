@@ -1,6 +1,7 @@
 import { YTestSuite, Test, Assert } from "yunit";
 
 class MyClass {}
+class MyError extends Error {}
 
 export default class UAssert extends YTestSuite {
     @Test()
@@ -121,8 +122,22 @@ export default class UAssert extends YTestSuite {
 
     @Test()
     async Test_Throws() {
+        Assert.throws(() => { throw 42; });
         Assert.throws(() => { throw new Error("error"); });
+        Assert.throws(() => { throw new MyError("error"); });
         Assert.throws(() => Assert.throws(() => {}));
+    }
+
+    @Test()
+    async Test_ThrowsException() {
+        Assert.throwsException(() => { throw new Error("error"); }, Error);
+        Assert.throwsException(() => { throw new MyError("error"); }, Error);
+        Assert.throwsException(() => { throw new MyError("error"); }, MyError);
+
+        Assert.throwsException(() => Assert.throwsException(() => { throw 42; }, Error), Assert.AssertionError);
+        Assert.throwsException(() => Assert.throws(() => {}), Assert.AssertionError);
+        Assert.throwsException(() => Assert.throwsException(() => {}, Error), Assert.AssertionError);
+        Assert.throwsException(() => Assert.throwsException(() => { throw new Error("error"); }, MyError), Assert.AssertionError);
     }
 
     @Test()
