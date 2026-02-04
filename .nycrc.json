@@ -1,9 +1,9 @@
 {
     "reporter": ["text", "lcov"],
     "include": [
-        "dist/*.js"
+        "dist/yunit/*.js"
     ],
     "exclude": [
-        "dist/index.js"
+        "dist/yunit/index.js"
     ]
 }

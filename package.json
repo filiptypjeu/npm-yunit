@@ -5,20 +5,14 @@
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "scripts": {
-        "build": "tsc",
+        "build": "tsc -b src --verbose",
         "dev": "npm run build && npm run test:build && npm run test:run",
-        "link": "npm run build && npm link",
-        "lint": "eslint src --ext .ts",
-        "lint-fix": "eslint src --ext .ts --fix",
         "postversion": "git push && git push --tags",
-        "prepare": "npm run build",
-        "prepublishOnly": "npm test && npm run lint",
-        "preversion": "npm run lint",
-        "test": "npm run test:link && npm run test:build && npm run test:run",
-        "test:link": "npm run link && npm link yunit",
-        "test:build": "npx tsc -p unittests",
-        "test:run": "node dist-unittests/index.js",
-        "test-coverage": "npm run test:link && npm run test:build && npm run test-coverage:run",
+        "preversion": "npm test",
+        "test": "npm run test:build && npm run test:run",
+        "test:build": "tsc -b unittests --verbose",
+        "test:run": "cross-env NODE_PATH=dist node dist/unittests/index.js",
+        "test-coverage": "npm run test:build && npm run test-coverage:run",
         "test-coverage:run": "nyc npm run test:run",
         "version": "git add -A src"
     },
@@ -39,11 +33,9 @@
         "@types/assert": "^1.5.6",
         "@types/command-line-args": "^5.2.0",
         "@types/node": "^20.4.2",
-        "@typescript-eslint/eslint-plugin": "^6.8.0",
-        "@typescript-eslint/parser": "^6.8.0",
-        "eslint": "^8.51.0",
-        "nyc": "^15.1.0",
-        "typescript": "^5.1.6"
+        "cross-env": "^10.1.0",
+        "nyc": "^17.1.0",
+        "typescript": "^5.9.3"
     },
     "files": [
         "dist"

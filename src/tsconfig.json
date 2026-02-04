@@ -1,0 +1,13 @@
+{
+    "extends": "../tsconfig.json",
+
+    "compilerOptions": {
+        "rootDir": ".",
+        "outDir": "../dist/yunit",
+        "tsBuildInfoFile": "../dist/.tsbuildinfo_yunit",
+        "composite": true,
+        "declaration": true,
+    },
+    "include": ["./**/*.ts"],
+    "exclude": ["../node_modules", "../dist"],
+}

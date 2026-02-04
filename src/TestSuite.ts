@@ -189,7 +189,6 @@ export abstract class YTestSuite<R extends string = string> extends TestSuite {
   /**
    * Method that gets called after each test ends. Override if needed.
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public async runAfterEachTest(_resultSoFar: TestResult): Promise<void> {}
 
   static msSince = (start: [number, number]) => {
@@ -262,7 +261,6 @@ export abstract class YTestSuite<R extends string = string> extends TestSuite {
 
       // Deduce N if only a target time was given
       if (N === undefined) {
-        // eslint-disable-next-line  @typescript-eslint/no-unsafe-assignment
         const seconds = (o as any).targetTime || 5;
         const avg = warmupDuration / warmups;
         N = Math.round((seconds * 1.5e9) / avg);

@@ -1,25 +1,24 @@
 {
-    "compilerOptions": {
-        "target": "ES6",
-        "moduleResolution": "node",
-        "module": "CommonJS",
-        "lib": ["es2015", "es2015.promise", "dom"],
-        "experimentalDecorators": true,
-        "esModuleInterop": true,
-        "strict": true,
+    "extends": "../tsconfig.json",
 
-        "outDir": "../dist-unittests",
+    "references": [
+        { "path": "../src" },
+    ],
+
+    "compilerOptions": {
+        "rootDir": ".",
+        "outDir": "../dist/unittests",
+        "tsBuildInfoFile": "../dist/.tsbuildinfo_unittests",
+
+        "paths": {
+            "yunit": ["../dist/yunit"],
+        },
+
+        "experimentalDecorators": true,
 
         "noImplicitAny": false,
-        "allowUnreachableCode": true,
-        "allowUnusedLabels": false,
-        "noFallthroughCasesInSwitch": true,
-        "noImplicitOverride": true,
-        "noImplicitReturns": true,
-        "noPropertyAccessFromIndexSignature": true,
         "noUncheckedIndexedAccess": false,
-        "noUnusedLocals": false,
-        "noUnusedParameters": true
     },
-    "include": ["."]
+    "include": ["./**/*.ts"],
+    "exclude": ["../node_modules", "../dist"],
 }

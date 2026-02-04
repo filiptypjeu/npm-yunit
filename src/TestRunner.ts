@@ -26,17 +26,14 @@ class YTestSuiteLoader extends TestSuiteLoader {
 
   // Identfying valid test suites when loading is not always handled correctly in xunit.ts
   async loadTestSuite(module_path: string, filters: RegExp[]): Promise<TestSuite | null> {
-    // eslint-disable-next-line
     const test_class = await import(module_path);
 
-    // eslint-disable-next-line
     const proto = test_class.default?.prototype;
     if (!isTestSuitePrototype(proto)) return null;
 
     const tests = proto.getTests(filters);
     if (!tests || Object.keys(tests).length === 0) return null;
 
-    // eslint-disable-next-line
     const suite: TestSuite = new test_class.default();
     suite.setTests(tests);
     return suite;
@@ -148,7 +145,6 @@ export const run = async (relative_path: string, name: string): Promise<void> =>
       multiple: true,
     },
   ]);
-  // eslint-disable-next-line
   let filters: string[] = args["filter"] || [];
   filters = filters.flatMap(f => f.split(",")).map(f => f.trim());
 
